@@ -1,0 +1,9 @@
+[package]
+
+name = "cppStream"
+version = "0.0.1"
+authors = ["wooya <doomsplayer@gmail.com>"]
+
+[lib]
+name = "cppStream"
+path = "src/lib.rs"
