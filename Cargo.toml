@@ -3,7 +3,18 @@
 name = "cppStream"
 version = "0.0.1"
 authors = ["wooya <doomsplayer@gmail.com>"]
+description = "a wrapper brings `<<` operator to rust's writer like what C++ did"
+keywords =["stream", "cpp"]
+license = "MIT"
+repository = "https://github.com/doomsplayer/cppStream"
+readme = "README.md"
+documentation = "https://github.com/doomsplayer/cppStream/blob/master/README.md"
+homepage = "https://github.com/doomsplayer/cppStream"
 
 [lib]
 name = "cppStream"
 path = "src/lib.rs"
+
+[[bin]]
+name = "example"
+path = "examples/example.rs"

@@ -2,6 +2,7 @@
 use std::fmt::Show;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::ops::Shl;
 
 pub struct OStream<'a,W: 'a> {
     out_stream:  Rc<RefCell<&'a mut W>>
@@ -15,7 +16,7 @@ impl<'a,W> OStream<'a,W> {
     }
 }
 
-impl<'a,T,W> std::ops::Shl<T,OStream<'a,W>> for OStream<'a,W> where W: Writer, T: Show {
+impl<'a,T,W> Shl<T,OStream<'a,W>> for OStream<'a,W> where W: Writer, T: Show {
     fn shl(&self, output: &T) -> OStream<'a,W> {
 
         
@@ -27,10 +28,6 @@ impl<'a,T,W> std::ops::Shl<T,OStream<'a,W>> for OStream<'a,W> where W: Writer, T
         
     }
 }
-
-#[allow(non_upper_case_globals)]
-pub const endl: char = '\n';
-
 
 #[test]
 fn test_out() {
@@ -49,3 +46,4 @@ fn test_stdout() {
     let cout = OStream::new(stream);
     cout << 1i << 2u << 3f64 << endl;
 }
+
