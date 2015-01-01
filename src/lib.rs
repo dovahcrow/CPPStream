@@ -3,6 +3,8 @@
 
 pub mod istream;
 
-pub mod ostream;
+
+
+//pub mod ostream;
 
 

@@ -4,26 +4,50 @@ use std::rc::Rc;
 use std::ops::Shr;
 use std::mem::transmute;
 use std::default::Default;
+use std::borrow::BorrowFromMut;
+use std::ops::DerefMut;
 
-pub struct BorrowedIStream<'a,R: 'a> where R: Reader {
-    istream: Rc<RefCell<&'a mut R>>
+//pub trait BorrowFromMut<Sized? Owned> for Sized? {
+//    fn borrow_from_mut(owned: &mut Owned) -> &mut Self;
+//}
+
+//trait CanRead<R> where R: Reader {
+//    fn
+
+pub struct IStream<'a,'b,R:'a,Q:'b,Sized? D:'b> where R: Reader, D: BorrowFromMut<Q>, &'b mut D: DerefMut<R> {
+    istream: Rc<RefCell<Q>>
 }
 
-pub struct OwnedIStream<R> where R: Reader {
-    istream: Rc<RefCell<R>>
+pub trait ToIStream<'a,'b,R,Q,D> where R: Reader, D: BorrowFromMut<Q>, &'b mut D: DerefMut<R> {
+    fn to_istream(self) -> IStream<'a,'b,R,Q,D>;
 }
 
-impl<'a,F,R> Shr<F,BorrowedIStream<'a,R>> for BorrowedIStream<'a,R> where R: Reader, F: FromStr + Default {
-    fn shr(&self, output: &F) -> BorrowedIStream<'a,R> {
+impl<'a,'b,R,Q,D> ToIStream<'a,'b,R,Q,D> for Q where R: Reader, D: BorrowFromMut<Q>, &'b mut D: DerefMut<R> {
+    fn to_istream(self) -> IStream<'a,'b,R,Q,D> {
+        IStream {
+            istream: Rc::new(RefCell::new(self))
+        }
+    }
+}
+
+impl<'a,'b,R,Q,D> Clone for IStream<'a,'b,R,Q,D> where R: Reader, D: BorrowFromMut<Q>, &'b mut D: DerefMut<R> {
+    fn clone(&self) -> IStream<'a,'b,R,Q,D> {
+        IStream {
+            istream: self.istream.clone()
+        }
+    }
+}
         
-        let uout: &mut F = unsafe {transmute(output)}; // use unsafe here hence the shr trait use immutable right operand, need fix.
-        
-        let mut reader = self.istream.borrow_mut();
+impl<'a,'b,'c,F,R,Q,D> Shr<&'b mut F,IStream<'a,'a,R,Q,D>> for IStream<'a,'a,R,Q,D> where R: Reader, F: FromStr + Default, D: BorrowFromMut<Q>, &'a mut D: DerefMut<R> {
+    fn shr(mut self, output: &mut F) -> IStream<'a,'b,R,Q,D> {
+        let tmp = &mut *self.istream.borrow_mut();
+        let mut reader: &mut D = BorrowFromMut::borrow_from_mut(tmp);
+        let mut real_reader: &DerefMut<R> = &reader;
         
         let mut buf = String::new(); // a string buffer
         
         loop {
-            if let Ok(byte) = reader.read_byte() {
+            if let Ok(byte) = (*real_reader.deref_mut()).read_byte() {
                 if byte == '\u{A}' as u8 || byte == '\u{20}' as u8 {
                     break
                 } else {
@@ -33,76 +57,25 @@ impl<'a,F,R> Shr<F,BorrowedIStream<'a,R>> for BorrowedIStream<'a,R> where R: Rea
                 break
             }
         }
-        *uout = FromStr::from_str(buf[]).unwrap_or_default();
-        BorrowedIStream {
+        
+        *output = FromStr::from_str(buf[]).unwrap_or_default();
+        IStream {
             istream: self.istream.clone()
-        }
-    }
-}
-
-impl<F,R> Shr<F,OwnedIStream<R>> for OwnedIStream<R> where R: Reader, F: FromStr + Default {
-    fn shr(&self, output: &F) -> OwnedIStream<R> {
-        
-        let uout: &mut F = unsafe {transmute(output)}; // use unsafe here hence the shr trait use immutable right operand, need fix.
-        
-        let mut reader = self.istream.borrow_mut();
-        
-        let mut buf = String::new(); // a string buffer
-        
-        loop {
-            if let Ok(byte) = reader.read_byte() {
-                if byte == '\u{A}' as u8 || byte == '\u{20}' as u8 {
-                    break
-                } else {
-                    buf.push(byte as char);
-                }
-            } else {
-                break
-            }
-        }
-        *uout = FromStr::from_str(buf[]).unwrap_or_default();
-        OwnedIStream {
-            istream: self.istream.clone()
-        }
-    }
-}
-
-pub trait ToIStream<'a,R> where R: Reader {
-    fn to_istream(&'a mut self) -> BorrowedIStream<'a,R>;
-}
-
-impl<'a,R> ToIStream<'a,R> for R where R: Reader {
-    fn to_istream(&'a mut self) -> BorrowedIStream<'a,R> {
-        BorrowedIStream {
-            istream: Rc::new(RefCell::new(self))
-        }
-    }
-}
-
-pub trait AsIStream<R> where R: Reader {
-    fn as_istream(mut self) -> OwnedIStream<R>;
-}
-
-impl<R> AsIStream<R> for R where R: Reader {
-    fn as_istream(mut self) -> OwnedIStream<R> {
-        OwnedIStream {
-            istream: Rc::new(RefCell::new(self))
         }
     }
 }
 
 #[test]
 fn test_buf() {
-    use std::io::stdout;
-    use super::ostream::{AsOStream, endl};
-    
-    let mut b = b"1 2 3 4 5";
-    let cin = b.to_istream();
-    let d = 0u;
+    use std::io::{stdio,stdin};
+    use super::istream::IStream;
+    let mut cin = stdin();
+    let vin: IStream<_,&mut stdio::StdinReader,stdio::StdinReader> = (&mut cin).to_istream();
+    let mut d = 0u;
     for _ in range(0i,5) {
-        cin >> d;
-        stdout().as_ostream() << d << endl;
+        vin.clone() >> &mut d;
     }
+
     
 }
 
