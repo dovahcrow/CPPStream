@@ -4,16 +4,25 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::ops::Shl;
 use std::io::{ByRefWriter,RefWriter};
+use std::io::LineBufferedWriter;
+use std::io::stdio::StdWriter;
+use std::io::stdout;
 
 pub struct OStream<W> where W: Writer {
     ostream: Rc<RefCell<W>>,
 }
 
+impl<W> OStream<W> where W: Writer {
+    pub fn new(writer: W) -> OStream<W> {
+        OStream {
+            ostream: Rc::new(RefCell::new(writer))
+        }
+    }
+}
+
 pub trait ToOStream<'a> where Self: ByRefWriter + Writer {
     fn to_ostream(&'a mut self) -> OStream<RefWriter<'a,Self>> {
-        OStream {
-            ostream: Rc::new(RefCell::new(self.by_ref()))
-        }
+        OStream::new(self.by_ref())
     }
 }
 
@@ -21,9 +30,7 @@ impl<'a,B> ToOStream<'a> for B where B: ByRefWriter + Writer {}
 
 pub trait AsOStream where Self: Writer {
     fn as_ostream(self) -> OStream<Self> {
-        OStream {
-            ostream: Rc::new(RefCell::new(self))
-        }
+        OStream::new(self)
     }
 }
 
@@ -49,7 +56,15 @@ impl<W> Clone for OStream<W> where W: Writer {
 
 #[allow(non_upper_case_globals)]
 pub const endl: char = '\n';
-    
+
+pub fn cout() -> OStream<LineBufferedWriter<StdWriter>> {
+    OStream::new(stdout())
+}
+
+pub fn ostream<R>(writer: R) -> OStream<R> where R: Writer {
+    OStream::new(writer)
+}
+
 #[test]
 fn test_out() {
     let mut vec = Vec::with_capacity(100);

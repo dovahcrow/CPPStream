@@ -4,16 +4,24 @@ use std::rc::Rc;
 use std::ops::Shr;
 use std::default::Default;
 use std::io::{RefReader,ByRefReader};
+use std::io::stdio::StdinReader;
+use std::io::stdin;
 
 pub struct IStream<R> where R: Reader {
     istream: Rc<RefCell<R>>
 }
 
+impl<R> IStream<R> where R: Reader {
+    pub fn new(reader: R) -> IStream<R> {
+        IStream {
+            istream: Rc::new(RefCell::new(reader))
+        }
+    }
+}
+
 pub trait ToIStream<'a> where Self: ByRefReader + Reader {
     fn to_istream(&'a mut self) -> IStream<RefReader<'a,Self>> {
-        IStream {
-            istream: Rc::new(RefCell::new(self.by_ref()))
-        }
+        IStream::new(self.by_ref())
     }
 }
 
@@ -21,9 +29,7 @@ impl<'a,B> ToIStream<'a> for B where B: ByRefReader + Reader {}
 
 pub trait AsIStream where Self: Reader {
     fn as_istream(self) -> IStream<Self> {
-        IStream {
-            istream: Rc::new(RefCell::new(self))
-        }
+        IStream::new(self)
     }
 }
 
@@ -59,6 +65,14 @@ impl<'b,F,R> Shr<&'b mut F,IStream<R>> for IStream<R> where R: Reader, F: FromSt
             istream: self.istream.clone()
         }
     }
+}
+
+pub fn istream<R>(reader: R) -> IStream<R> where R: Reader {
+    IStream::new(reader)
+}
+
+pub fn cin() -> IStream<StdinReader> {
+    IStream::new(stdin())
 }
 
 #[test]
