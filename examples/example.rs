@@ -1,7 +1,7 @@
 #![cfg(not(test))]
+#![feature(globs)]
 extern crate cppStream;
-use cppStream::ostream::{endl, ToOStream, AsOStream};
-use cppStream::istream::{ToIStream, AsIStream};
+use cppStream::*;
 use std::io::{stdin,stdout};
 
 fn main() {
@@ -13,11 +13,14 @@ fn main() {
     println!("{}", out);
     
     let cout = stdout().as_ostream(); // move the out
-    cout << 1i << 2f64 << "goodday!" << vec![1i,2i,3i,4i] << endl;
+    cout.clone() << 1i << 2f64 << "goodday!" << vec![1i,2i,3i,4i] << endl;
 
     let cin = stdin().as_istream();
     let mut d = String::new();
     let mut f = 0i;
-    cin >> d >> f;
-    cout << d << endl << f << endl;
+    cout.clone() << "please input a string: ";
+    cin.clone() >> &mut d;
+    cout.clone() << "pleas input a int: ";
+    cin.clone() >> &mut f;
+    cout << "string is: `" << d << "`, and number is: `" << f << "`" << endl;
 }

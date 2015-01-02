@@ -1,7 +1,7 @@
 [package]
 
 name = "cppStream"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["wooya <doomsplayer@gmail.com>"]
 description = "a wrapper brings `<<` and `>>` operator to rust's writer/reader like what C++ did"
 keywords =["stream", "cpp"]
@@ -15,6 +15,6 @@ homepage = "https://github.com/doomsplayer/cppStream"
 name = "cppStream"
 path = "src/lib.rs"
 
-#[[bin]]
-#name = "example"
-#path = "examples/example.rs"
+[[bin]]
+name = "example"
+path = "examples/example.rs"

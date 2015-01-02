@@ -3,57 +3,46 @@ use std::fmt::Show;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ops::Shl;
+use std::io::{ByRefWriter,RefWriter};
 
-pub struct BorrowedOStream<'a,W: 'a> where W: Writer {
-    ostream:  Rc<RefCell<&'a mut W>>
-}
-
-pub struct OwnedOStream<W> where W: Writer {
+pub struct OStream<W> where W: Writer {
     ostream: Rc<RefCell<W>>,
 }
 
-impl<'a,T,W> Shl<T,BorrowedOStream<'a,W>> for BorrowedOStream<'a,W> where W: Writer, T: Show {
-    fn shl(&self, output: &T) -> BorrowedOStream<'a,W> {
+pub trait ToOStream<'a> where Self: ByRefWriter + Writer {
+    fn to_ostream(&'a mut self) -> OStream<RefWriter<'a,Self>> {
+        OStream {
+            ostream: Rc::new(RefCell::new(self.by_ref()))
+        }
+    }
+}
 
-        
+impl<'a,B> ToOStream<'a> for B where B: ByRefWriter + Writer {}
+
+pub trait AsOStream where Self: Writer {
+    fn as_ostream(self) -> OStream<Self> {
+        OStream {
+            ostream: Rc::new(RefCell::new(self))
+        }
+    }
+}
+
+impl<W> AsOStream for W where W: Writer {}
+
+impl<W,T> Shl<T,OStream<W>> for OStream<W> where W: Writer, T: Show {
+    fn shl(self, output: T) -> OStream<W> {
         write!(self.ostream.borrow_mut(), "{}", output);
-  
-        BorrowedOStream {
+        self.ostream.borrow_mut().flush();
+        OStream {
             ostream: self.ostream.clone()
         }
-        
     }
 }
 
-impl<W,T> Shl<T,OwnedOStream<W>> for OwnedOStream<W> where W: Writer, T: Show {
-    fn shl(&self, output: &T) -> OwnedOStream<W> {
-        write!(self.ostream.borrow_mut(), "{}", output);
-        OwnedOStream {
-            ostream: self.ostream.clone(),
-        }
-    }
-}
-
-pub trait AsOStream<W> {
-    fn as_ostream(mut self) -> OwnedOStream<W>;
-}
-
-impl<T> AsOStream<T> for T where T: Writer {
-    fn as_ostream(mut self) -> OwnedOStream<T> {
-        OwnedOStream {
-            ostream: Rc::new(RefCell::new(self))
-        }
-    }
-}
-
-pub trait ToOStream<'a,W> where W: Writer {
-    fn to_ostream(&'a mut self) -> BorrowedOStream<'a,W>;
-}
-
-impl<'a,T> ToOStream<'a,T> for T where T: Writer {
-    fn to_ostream(&'a mut self) -> BorrowedOStream<'a,T> {
-        BorrowedOStream {
-            ostream: Rc::new(RefCell::new(self))
+impl<W> Clone for OStream<W> where W: Writer {
+    fn clone(&self) -> OStream<W> {
+        OStream {
+            ostream: self.ostream.clone()
         }
     }
 }
