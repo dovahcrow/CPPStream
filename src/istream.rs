@@ -19,21 +19,21 @@ impl<R> IStream<R> where R: Reader {
     }
 }
 
-pub trait ToIStream<'a> where Self: ByRefReader + Reader {
+pub trait ToIStream<'a> where Self: ByRefReader + Reader + Sized {
     fn to_istream(&'a mut self) -> IStream<RefReader<'a,Self>> {
         IStream::new(self.by_ref())
     }
 }
 
-impl<'a,B> ToIStream<'a> for B where B: ByRefReader + Reader {}
+impl<'a,B> ToIStream<'a> for B where B: ByRefReader + Reader + Sized {}
 
-pub trait AsIStream where Self: Reader {
+pub trait AsIStream where Self: Reader + Sized {
     fn as_istream(self) -> IStream<Self> {
         IStream::new(self)
     }
 }
 
-impl<R> AsIStream for R where R: Reader {}
+impl<R> AsIStream for R where R: Reader + Sized {}
 
 impl<R> Clone for IStream<R> where R: Reader {
     fn clone(&self) -> IStream<R> {
@@ -43,7 +43,8 @@ impl<R> Clone for IStream<R> where R: Reader {
     }
 }
         
-impl<'b,F,R> Shr<&'b mut F,IStream<R>> for IStream<R> where R: Reader, F: FromStr + Default {
+impl<'b,F,R> Shr<&'b mut F> for IStream<R> where R: Reader, F: FromStr + Default {
+    type Output = IStream<R>;
     fn shr(mut self, output: &mut F) -> IStream<R> {
         
         let mut buf = String::new(); // a string buffer

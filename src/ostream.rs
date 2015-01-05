@@ -20,7 +20,7 @@ impl<W> OStream<W> where W: Writer {
     }
 }
 
-pub trait ToOStream<'a> where Self: ByRefWriter + Writer {
+pub trait ToOStream<'a> where Self: ByRefWriter + Writer + Sized {
     fn to_ostream(&'a mut self) -> OStream<RefWriter<'a,Self>> {
         OStream::new(self.by_ref())
     }
@@ -28,7 +28,7 @@ pub trait ToOStream<'a> where Self: ByRefWriter + Writer {
 
 impl<'a,B> ToOStream<'a> for B where B: ByRefWriter + Writer {}
 
-pub trait AsOStream where Self: Writer {
+pub trait AsOStream where Self: Writer + Sized {
     fn as_ostream(self) -> OStream<Self> {
         OStream::new(self)
     }
@@ -36,7 +36,8 @@ pub trait AsOStream where Self: Writer {
 
 impl<W> AsOStream for W where W: Writer {}
 
-impl<W,T> Shl<T,OStream<W>> for OStream<W> where W: Writer, T: Show {
+impl<W,T> Shl<T> for OStream<W> where W: Writer, T: Show {
+    type Output = OStream<W>;
     fn shl(self, output: T) -> OStream<W> {
         write!(self.ostream.borrow_mut(), "{}", output);
         self.ostream.borrow_mut().flush();

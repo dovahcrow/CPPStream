@@ -52,7 +52,7 @@ impl<S> IOStream<S> where S: Stream {
     }
 }
 
-pub trait ToIOStream<'a> where Self: ByRefStream + Stream {
+pub trait ToIOStream<'a> where Self: ByRefStream + Stream + Sized {
     fn to_iostream(&'a mut self) -> IOStream<RefStream<'a,Self>>;
 }
 
@@ -63,7 +63,7 @@ impl<'a,B> ToIOStream<'a> for B where B: ByRefStream + Stream {
     }
 }
 
-pub trait AsIOStream where Self: Stream {
+pub trait AsIOStream where Self: Stream + Sized {
     fn as_iostream(self) -> IOStream<Self> {
         let a = self;
         IOStream::new(a)
@@ -72,7 +72,8 @@ pub trait AsIOStream where Self: Stream {
 
 impl<S> AsIOStream for S where S: Stream {}
 
-impl<S,T> Shl<T,IOStream<S>> for IOStream<S> where S: Stream, T: Show {
+impl<S,T> Shl<T> for IOStream<S> where S: Stream, T: Show {
+    type Output = IOStream<S>;
     fn shl(self, output: T) -> IOStream<S> {
         {
             let mut writer = self.iostream.borrow_mut();
@@ -83,7 +84,8 @@ impl<S,T> Shl<T,IOStream<S>> for IOStream<S> where S: Stream, T: Show {
     }
 }
 
-impl<'b,F,S> Shr<&'b mut F,IOStream<S>> for IOStream<S> where S: Stream, F: FromStr + Default {
+impl<'b,F,S> Shr<&'b mut F> for IOStream<S> where S: Stream, F: FromStr + Default {
+    type Output = IOStream<S>;
     fn shr(mut self, output: &mut F) -> IOStream<S> {
         
         let mut buf = String::new(); // a string buffer
