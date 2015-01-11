@@ -39,7 +39,7 @@ impl<W> AsOStream for W where W: Writer {}
 impl<W,T> Shl<T> for OStream<W> where W: Writer, T: fmt::Show {
     type Output = OStream<W>;
     fn shl(self, output: T) -> OStream<W> {
-        write!(self.ostream.borrow_mut(), "{}", output);
+        write!(self.ostream.borrow_mut(), "{:?}", output);
         self.ostream.borrow_mut().flush();
         OStream {
             ostream: self.ostream.clone()
