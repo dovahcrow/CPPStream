@@ -1,7 +1,7 @@
 [package]
 
 name = "cppStream"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["wooya <doomsplayer@gmail.com>"]
 description = "a wrapper brings `<<` and `>>` operator to rust's writer/reader/stream like what C++ did"
 keywords =["stream", "cpp"]

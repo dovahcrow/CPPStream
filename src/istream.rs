@@ -1,4 +1,4 @@
-use std::str::{FromStr,from_str};
+use std::str::{FromStr};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ops::Shr;
@@ -61,7 +61,7 @@ impl<'b,F,R> Shr<&'b mut F> for IStream<R> where R: Reader, F: FromStr + Default
             }
         }
         
-        *output = FromStr::from_str(buf[]).unwrap_or_default();
+        *output = FromStr::from_str(&buf[]).unwrap_or_default();
         IStream {
             istream: self.istream.clone()
         }
@@ -85,8 +85,8 @@ fn test_buf() {
     let vin = b"1 2 3 4".as_istream();
     let cout = stdout().as_ostream();
     
-    for _ in range(0i,5) {
-        let mut d = 0i;
+    for _ in range(0is,5) {
+        let mut d = 0is;
         vin.clone() >> &mut d;
         cout.clone() << d << endl;
     }

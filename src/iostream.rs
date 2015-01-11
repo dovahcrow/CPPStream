@@ -1,12 +1,12 @@
 #![allow(unused_must_use)]
-use std::fmt::Show;
+use std::fmt;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ops::{Shl,Shr};
 use std::io::Stream;
 use std::io::{Writer,Reader};
 use std::io::IoResult;
-use std::str::{FromStr,from_str};
+use std::str::{FromStr};
 use std::default::Default;
 
 pub struct RefStream<'a,S:'a> where S: Stream {
@@ -15,7 +15,7 @@ pub struct RefStream<'a,S:'a> where S: Stream {
 
 impl<'a, S: Stream> Reader for RefStream<'a, S> {
     #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> { self.inner.read(buf) }
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> { self.inner.read(buf) }
 }
 
 impl<'a, S: Stream> Writer for RefStream<'a, S> {
@@ -72,12 +72,12 @@ pub trait AsIOStream where Self: Stream + Sized {
 
 impl<S> AsIOStream for S where S: Stream {}
 
-impl<S,T> Shl<T> for IOStream<S> where S: Stream, T: Show {
+impl<S,T> Shl<T> for IOStream<S> where S: Stream, T: fmt::Show {
     type Output = IOStream<S>;
     fn shl(self, output: T) -> IOStream<S> {
         {
             let mut writer = self.iostream.borrow_mut();
-            write!(writer, "{}", output);
+            write!(writer, "{:?}", output);
             writer.flush();
         }
         self.clone()
@@ -102,7 +102,7 @@ impl<'b,F,S> Shr<&'b mut F> for IOStream<S> where S: Stream, F: FromStr + Defaul
             }
         }
         
-        *output = FromStr::from_str(buf[]).unwrap_or_default();
+        *output = FromStr::from_str(&buf[]).unwrap_or_default();
         self.clone()
     }
 }
@@ -126,7 +126,7 @@ fn test_iostream() {
     
     let io = iostream(TcpStream::connect("127.0.0.1:7077"));
     io.clone() << "1" << "2" << endl;
-    let mut a = 0i;
+    let mut a = 0is;
     io.clone() >> &mut a;
     cout() << a << endl;
 }

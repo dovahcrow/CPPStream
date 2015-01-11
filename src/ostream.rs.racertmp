@@ -1,5 +1,5 @@
-#![allow(unused_must_use)]
-use std::fmt;
+l#![allow(unused_must_use)]
+use std::fmt::Show;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::ops::Shl;
@@ -36,7 +36,7 @@ pub trait AsOStream where Self: Writer + Sized {
 
 impl<W> AsOStream for W where W: Writer {}
 
-impl<W,T> Shl<T> for OStream<W> where W: Writer, T: fmt::Show {
+impl<W,T> Shl<T> for OStream<W> where W: Writer, T: Show {
     type Output = OStream<W>;
     fn shl(self, output: T) -> OStream<W> {
         write!(self.ostream.borrow_mut(), "{}", output);
@@ -71,7 +71,7 @@ fn test_out() {
     let mut vec = Vec::with_capacity(100);
     {
         let vecout = vec.to_ostream();
-        vecout << 1is << 2us << 3f64 << "good C++" << endl;
+        vecout << 1i << 2u << 3f64 << "good C++" << endl;
     }
     
     assert_eq!(vec, b"123good C++\n");
@@ -81,6 +81,6 @@ fn test_out() {
 fn test_stdout() {
     use std;
     let cout = std::io::stdout().as_ostream();
-    cout << 1is << 2us << 3f64 << endl;
+    cout << 1i << 2u << 3f64 << endl;
 }
 
